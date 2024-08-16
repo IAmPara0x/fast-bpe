@@ -60,7 +60,7 @@ fn bpe_step(tokens: Vec<u32>, pairs_freq: &mut Mappings, new_pair: (u32, u32), n
 fn get_all_codepoints_tokens(text: String, pattern: Regex) -> Vec<Vec<u32>> {
     let codepoints: Vec<&str> = pattern.find_iter(&text).map(|m| m.unwrap().as_str()).collect();
     codepoints.into_iter()
-              .map(|codepoint| codepoint.chars().map( |c| c as u32 ).collect())
+              .map(|codepoint| codepoint.bytes().map(|byte| byte as u32).collect())
               .collect()
 }
 
