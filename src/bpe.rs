@@ -13,7 +13,7 @@ fn bpe_step(tokens: Vec<u32>, pairs_freq: &mut Mappings, new_pair: (u32, u32), n
         return vec![];
     }
 
-    let mut updated_tokens = Vec::new();
+    let mut updated_tokens = Vec::with_capacity(len_text_tokens); // Preallocate capacity to avoid reallocations
     let mut idx: usize = 0;
 
     while idx < len_text_tokens - 1 {
@@ -95,6 +95,7 @@ pub fn bpe_train(text: String, target_merges: u32) -> Mappings {
                                                                      .max_by(|a, b| a.1.cmp(&b.1))
                                                                      .unwrap();
 
+        // println!("most_common_pair: {:?}, most_common_pair_count: {:?}", most_common_pair, most_common_pair_count);
         if most_common_pair_count == 1 { break; }
 
         codepoints_tokens = codepoints_tokens.into_iter().map(| tokens | bpe_step(tokens, &mut pairs_freq, most_common_pair, current_token_counter)).collect();
