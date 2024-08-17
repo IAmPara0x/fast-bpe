@@ -4,8 +4,8 @@ import json
 
 @dataclass
 class Tokenizer:
-    tokens_dict: dict[int, tuple[int,int]]
-    bpe_dict: dict[tuple[int,int], int]
+    tokens_dict: dict[int, tuple[int,int] | int]
+    bpe_dict: dict[tuple[int,int] | int, int]
 
     def __repr__(self) -> str:
         result = ""
@@ -18,33 +18,34 @@ class Tokenizer:
 
     def get_utf8_bytes_from_token(self, token_id) -> list[int]:
 
-        if token_id <= 255:
-            return [token_id]
+        mapping = self.tokens_dict[token_id]
 
-        t1, t2 = self.tokens_dict[token_id]
+        if isinstance(mapping, int):
+            return [mapping]
 
-        if 255 < t1:
+        else:
+
+            t1, t2 = mapping
             t1_bytes = self.get_utf8_bytes_from_token(t1)
-        else:
-            t1_bytes = [t1]
-        
-        if 255 < t2:
             t2_bytes = self.get_utf8_bytes_from_token(t2)
-        else:
-            t2_bytes = [t2]
+            return t1_bytes + t2_bytes
 
-        return t1_bytes + t2_bytes
 
 
     @staticmethod
     def from_json(path: str) -> "Tokenizer":
         with open(path, "r") as f:
-            unparsed_mappings: dict[str, list[int]] = json.loads(f.read())
+            unparsed_mappings: dict[str, list[int] | int] = json.loads(f.read())
 
 
         tokens_dict = {}
         for (k,v) in unparsed_mappings.items():
-            tokens_dict[int(k)] = tuple(v)
+
+            if isinstance(v, int):
+                tokens_dict[int(k)] = v
+            else:
+                tokens_dict[int(k)] = tuple(v)
+            
 
         bpe_dict = dict((v,k) for k,v in tokens_dict.items())
             
@@ -107,10 +108,12 @@ class Tokenizer:
         while len(encodings) != 0:
 
             token = encodings.pop(0)
-            if (pair := self.tokens_dict.get(token)) is not None:
-                encodings.insert(0, pair[1])
-                encodings.insert(0, pair[0])
-            else:
+            mapping = self.tokens_dict.get(token)
+
+            if isinstance(mapping, int) or mapping == None:
                 decoded_bytes.append(token)
+            else:
+                encodings.insert(0, mapping[1])
+                encodings.insert(0, mapping[0])
 
         return bytes(decoded_bytes).decode("utf-8", errors="replace")

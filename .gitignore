@@ -3,3 +3,4 @@ __pycache__/
 .ipynb_checkpoints/
 /mappings.json
 *.ipynb
+/mappings-4096.json
